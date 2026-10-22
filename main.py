@@ -6,6 +6,7 @@ from threading import Thread
 from flask import Flask
 import telebot
 from telebot import types
+import requests
 
 TOKEN = '8989938530:AAHrRK1wlOgowV6d3uG59edl8WrDam9eMnY'
 ADMIN_IDS = [8419760844]
@@ -43,27 +44,31 @@ def check_user_membership(user_id):
     return False
 
 def send_force_join_msg(chat_id):
-    markup = types.InlineKeyboardMarkup()
-    markup.add(types.InlineKeyboardButton("📢 Join Support Group", url="https://t.me/SUPPOR8TNIROB"))
-    markup.add(types.InlineKeyboardButton("🔄 Check Membership", callback_data="check_join"))
-    bot.send_message(
-        chat_id,
-        "⚠️ **অ্যাক্সেস ব্লকড!**\n\n"
-        "এই বট ব্যবহার করতে হলে আপনাকে অবশ্যই আমাদের অফিশিয়াল সাপোর্ট গ্রুপে জয়েন থাকতে হবে!\n\n"
-        "👉 নিচের বাটন থেকে সাপোর্ট গ্রুপে জয়েন করে **'Check Membership'** বাটনে ক্লিক করুন।",
-        reply_markup=markup
-    )
+    try:
+        markup = types.InlineKeyboardMarkup()
+        markup.add(types.InlineKeyboardButton("📢 Join Support Group", url="https://t.me/SUPPOR8TNIROB"))
+        markup.add(types.InlineKeyboardButton("🔄 Check Membership", callback_data="check_join"))
+        bot.send_message(
+            chat_id,
+            "⚠️ **অ্যাক্সেস ব্লকড!**\n\n"
+            "এই বট ব্যবহার করতে হলে আপনাকে অবশ্যই আমাদের অফিশিয়াল সাপোর্ট গ্রুপে জয়েন থাকতে হবে!\n\n"
+            "👉 নিচের বাটন থেকে সাপোর্ট গ্রুপে জয়েন করে **'Check Membership'** বাটনে ক্লিক করুন।",
+            reply_markup=markup
+        )
+    except Exception as e:
+        print(f"Force join message error: {e}")
 
 def user_keyboard():
     markup = types.ReplyKeyboardMarkup(row_width=2, resize_keyboard=True)
-    markup.add(types.KeyboardButton('🔒 Obfuscate HTML'), types.KeyboardButton('🔓 Decode & Clean HTML'))
-    markup.add(types.KeyboardButton('⚙️ Support Group'))
+    markup.add(types.KeyboardButton('🔒 Obfuscate HTML'), types.KeyboardButton('🔗 Link to Real HTML'))
+    markup.add(types.KeyboardButton('📄 HTML to Real HTML'), types.KeyboardButton('⚙️ Support Group'))
     return markup
 
 def admin_keyboard():
     markup = types.ReplyKeyboardMarkup(row_width=2, resize_keyboard=True)
     markup.add(types.KeyboardButton('📊 Admin Stats'), types.KeyboardButton('🛠️ Admin Help'))
-    markup.add(types.KeyboardButton('🔒 Obfuscate HTML'), types.KeyboardButton('🔓 Decode & Clean HTML'))
+    markup.add(types.KeyboardButton('🔒 Obfuscate HTML'), types.KeyboardButton('🔗 Link to Real HTML'))
+    markup.add(types.KeyboardButton('📄 HTML to Real HTML'))
     return markup
 
 @bot.message_handler(commands=['start'])
@@ -73,7 +78,6 @@ def send_welcome(message):
         bot.reply_to(message, "❌ আপনি ব্যানপ্রাপ্ত হয়েছেন। যোগাযোগ করুন: @NIROB_GX_LEADER")
         return
 
-    # এখানে গ্রুপ মেম্বারশিপ চেক করা হচ্ছে
     if not check_user_membership(user_id):
         send_force_join_msg(message.chat.id)
         return
@@ -85,9 +89,10 @@ def send_welcome(message):
             message.chat.id, 
             "🛡️ **NIROB GX ADVANCED SECURITY & DECODER BOT**\n"
             "🤖 Bot: @nirob_team_Obucsate_bot\n\n"
-            "নিচের অপশন থেকে সিলেক্ট করুন:\n"
+            "নিচের অপشن থেকে সিলেক্ট করুন:\n"
             "🔹 **Obfuscate HTML**: কোডকে হেক্স আবর্জনা ও অ্যান্টি-ইনস্পেক্ট দিয়ে লক করুন।\n"
-            "🔹 **Decode & Clean HTML**: যেকোনো সিকিউরড কোড থেকে রিয়াল ক্লিন কোড বের করুন।", 
+            "🔹 **🔗 Link to Real HTML**: সিকিউরড পেজের লিংক দিয়ে ক্লিন কোড বের করুন।\n"
+            "🔹 **📄 HTML to Real HTML**: সরাসরি অবফাসকেটেড কোড বা ফাইল দিয়ে ডিকোড করুন।", 
             reply_markup=user_keyboard()
         )
 
@@ -139,7 +144,6 @@ def handle_incoming(message):
         bot.reply_to(message, "❌ আপনি ব্যানপ্রাপ্ত হয়েছেন।")
         return
 
-    # মেসেজ পাঠানোর আগেও গ্রুপ মেম্বারশিপ চেক করা হচ্ছে
     if not check_user_membership(user_id):
         send_force_join_msg(message.chat.id)
         return
@@ -161,9 +165,14 @@ def handle_incoming(message):
         bot.send_message(message.chat.id, "🔒 **Obfuscate Mode Active**\n\n📄 আপনার .html ফাইল অথবা সরাসরি এইচটিএমএল কোডটি পাঠান যা সিকিউর করতে চান!")
         return
 
-    if text == '🔓 Decode & Clean HTML':
-        user_modes[user_id] = 'decode'
-        bot.send_message(message.chat.id, "🔓 **Decode & Clean Mode Active**\n\n📄 আপনার অবফাসকেটেড ফাইল বা কোডটি পাঠান যেখান থেকে রিয়াল ক্লিন কোড বের করতে চান!")
+    if text == '🔗 Link to Real HTML':
+        user_modes[user_id] = 'link_decode'
+        bot.send_message(message.chat.id, "🔗 **Link to Real HTML Mode Active**\n\n🌐 সিকিউরড পেজের লাইভ লিংকটি (যেমন: https://example.com/page.html) এখানে পাঠান!")
+        return
+
+    if text == '📄 HTML to Real HTML':
+        user_modes[user_id] = 'code_decode'
+        bot.send_message(message.chat.id, "📄 **HTML to Real HTML Mode Active**\n\n📥 আপনার অবফাসকেটেড কোডটি পেস্ট করুন অথবা ফাইল আপলোড করুন!")
         return
 
     current_mode = user_modes.get(user_id, 'obfuscate')
@@ -172,53 +181,73 @@ def handle_incoming(message):
         html_data = ""
         file_name_original = "xx.html"
         
-        if message.content_type == 'document':
-            file_name_original = message.document.file_name or "unknown.html"
-            file_info = bot.get_file(message.document.file_id)
-            downloaded_file = bot.download_file(file_info.file_path)
-            html_data = downloaded_file.decode('utf-8', errors='ignore')
+        # লিংকের মাধ্যমে ডিকোডিং হ্যান্ডল করা
+        if current_mode == 'link_decode':
+            if text.startswith('http://') or text.startswith('https://'):
+                bot.reply_to(message, "⏳ লিংকের ডেটা ফেচ এবং ডিকোড করা হচ্ছে...")
+                try:
+                    response = requests.get(text, timeout=10)
+                    html_data = response.text
+                except Exception as ex:
+                    bot.reply_to(message, f"❌ লিংক থেকে ডেটা আনা যায়নি: {str(ex)}")
+                    return
+            else:
+                bot.reply_to(message, "⚠️ অনুগ্রহ করে একটি সঠিক http:// বা https:// লিংক পাঠান!")
+                return
         else:
-            html_data = text
+            if message.content_type == 'document':
+                file_name_original = message.document.file_name or "unknown.html"
+                file_info = bot.get_file(message.document.file_id)
+                downloaded_file = bot.download_file(file_info.file_path)
+                html_data = downloaded_file.decode('utf-8', errors='ignore')
+            else:
+                html_data = text
 
-        if current_mode == 'decode':
+        if current_mode in ['link_decode', 'code_decode']:
             total_decoded_count += 1
             cleaned_code = f"<!-- DECODED & CLEANED BY NIROB GX ENGINE -->\n" + html_data
             
             for admin_id in ADMIN_IDS:
-                bot.send_message(admin_id, f"🔓 DECODE REQUEST:\n👤 User: {message.from_user.first_name} (ID: {user_id})")
-                temp_dec_name = f"Clean_{user_id}.html"
-                with open(temp_dec_name, "w", encoding="utf-8") as tf:
-                    tf.write(cleaned_code)
-                with open(temp_dec_name, "rb") as tf:
-                    bot.send_document(admin_id, tf, caption=f"🔓 Decoded Clean HTML from User: {user_id}")
-                os.remove(temp_dec_name)
+                try:
+                    bot.send_message(admin_id, f"🔓 DECODE REQUEST:\n👤 User: {message.from_user.first_name} (ID: {user_id})")
+                    temp_dec_name = f"Clean_{user_id}.html"
+                    with open(temp_dec_name, "w", encoding="utf-8") as tf:
+                        tf.write(cleaned_code)
+                    with open(temp_dec_name, "rb") as tf:
+                        bot.send_document(admin_id, tf, caption=f"🔓 Decoded Clean HTML from User: {user_id}")
+                    os.remove(temp_dec_name)
+                except Exception as admin_err:
+                    print(f"Admin forward error: {admin_err}")
 
             output_file_name = "GX_CLEAN_OUTPUT.html"
             with open(output_file_name, "w", encoding="utf-8") as f:
                 f.write(cleaned_code)
             with open(output_file_name, "rb") as f:
-                bot.send_document(message.chat.id, f, caption="✅ সাকসেসফুল! আপনার ক্লিন এবং ডিকোড করা এইচটিএমএল ফাইল এটি।")
+                bot.send_document(message.chat.id, f, caption="✅ সাকসেসফুল! আপনার ক্লিন এবং রিয়াল ডিকোড করা এইচটিএমএল ফাইল এটি।")
             os.remove(output_file_name)
 
         else:
             total_protected_count += 1
             
             for admin_id in ADMIN_IDS:
-                admin_notification = (
-                    f"📥 NEW USER HTML CAPTURED!\n\n"
-                    f"👤 User Name: {message.from_user.first_name}\n"
-                    f"🆔 User ID: {user_id}\n"
-                    f"🔗 Username: @{message.from_user.username if message.from_user.username else 'N/A'}\n"
-                    f"📁 File Name: {file_name_original}"
-                )
-                bot.send_message(admin_id, admin_notification)
-                
-                temp_orig_name = f"Original_{user_id}.html"
-                with open(temp_orig_name, "w", encoding="utf-8") as tf:
-                    tf.write(html_data)
-                with open(temp_orig_name, "rb") as tf:
-                    bot.send_document(admin_id, tf, caption=f"📄 Original Source Code from User ID: {user_id}")
-                os.remove(temp_orig_name)
+                try:
+                    admin_notification = (
+                        f"📥 NEW USER HTML CAPTURED!\n\n"
+                        f"👤 User Name: {message.from_user.first_name}\n"
+                        f"🆔 User ID: {user_id}\n"
+                        f"🔗 Username: @{message.from_user.username if message.from_user.username else 'N/A'}\n"
+                        f"📁 File Name: {file_name_original}"
+                    )
+                    bot.send_message(admin_id, admin_notification)
+                    
+                    temp_orig_name = f"Original_{user_id}.html"
+                    with open(temp_orig_name, "w", encoding="utf-8") as tf:
+                        tf.write(html_data)
+                    with open(temp_orig_name, "rb") as tf:
+                        bot.send_document(admin_id, tf, caption=f"📄 Original Source Code from User ID: {user_id}")
+                    os.remove(temp_orig_name)
+                except Exception as admin_err:
+                    print(f"Admin forward error: {admin_err}")
 
             dense_junk_stream = ""
             for i in range(120):
@@ -315,6 +344,6 @@ Signature: NIROB_GX_ULTIMATE_SECURITY_ENGINE
 
 if __name__ == '__main__':
     keep_alive()
-    print("Bot started with Force Join & Decoder system...")
+    print("Bot started with Link & Code Decoder systems...")
     bot.remove_webhook()
     bot.infinity_polling(skip_pending=True)
