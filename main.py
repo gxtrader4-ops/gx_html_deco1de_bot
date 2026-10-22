@@ -51,9 +51,7 @@ def send_force_join_msg(chat_id):
         markup.add(types.InlineKeyboardButton("Check Membership", callback_data="check_join"))
         bot.send_message(
             chat_id,
-            "Access Blocked!\n\n"
-            "You must join our support group to use this bot.\n\n"
-            "Please join the group and click 'Check Membership'.",
+            "Access Blocked!\n\nYou must join our support group to use this bot.\n\nPlease join the group and click 'Check Membership'.",
             reply_markup=markup
         )
     except Exception as e:
@@ -119,10 +117,7 @@ def send_welcome(message):
     else:
         bot.send_message(
             message.chat.id, 
-            "Nirob GX Community - HTML Decoder Bot\n\n"
-            "Select an option below:\n"
-            "Link to Real HTML: Extract clean code from link.\n"
-            "HTML to Real HTML: Decode obfuscated code or file.", 
+            "Nirob GX Community - HTML Decoder Bot\n\nSelect an option below:\nLink to Real HTML: Extract clean code from link.\nHTML to Real HTML: Decode obfuscated code or file.", 
             reply_markup=user_keyboard()
         )
 
@@ -151,6 +146,8 @@ def handle_callbacks(call):
             send_welcome(call.message)
         else:
             bot.answer_callback_query(call.id, "You have not joined the group yet!", show_alert=True)
+
+user_modes = {}
 
 @bot.message_handler(content_types=['text', 'document'])
 def handle_incoming(message):
@@ -242,8 +239,6 @@ def handle_incoming(message):
         
     except Exception as e:
         bot.reply_to(message, f"Error: {str(e)}")
-
-user_modes = {}
 
 if __name__ == '__main__':
     keep_alive()
