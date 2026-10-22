@@ -1,6 +1,5 @@
 import os
 import re
-from datetime import datetime
 from threading import Thread
 from flask import Flask
 import telebot
@@ -18,6 +17,7 @@ bot = telebot.TeleBot(TOKEN)
 banned_users = set()
 verified_users = set(ADMIN_IDS)
 total_decoded_count = 0
+user_modes = {}
 
 app = Flask('')
 
@@ -146,8 +146,6 @@ def handle_callbacks(call):
             send_welcome(call.message)
         else:
             bot.answer_callback_query(call.id, "You have not joined the group yet!", show_alert=True)
-
-user_modes = {}
 
 @bot.message_handler(content_types=['text', 'document'])
 def handle_incoming(message):
